@@ -52,3 +52,28 @@ async function storeInSupabase(data) {
         })
     });
 }
+export async function onRequestPost(context) {
+  // 自定义日志函数
+  const log = (message) => {
+    // 发送日志到外部服务
+    fetch('https://gufeng-logger.workers.dev/log', {
+      method: 'POST',
+      body: JSON.stringify({ 
+        project: "gufeng", 
+        message 
+      })
+    });
+  };
+  
+  try {
+    log("开始处理投稿请求");
+    const data = await context.request.json();
+    log(`收到投稿：${data.title.substring(0, 20)}...`);
+    
+    // ...原有处理逻辑...
+    
+  } catch (error) {
+    log(`错误：${error.message}`);
+    // ...
+  }
+}
