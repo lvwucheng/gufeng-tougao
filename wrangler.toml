@@ -1,0 +1,14 @@
+name = "gufeng-tougao"
+compatibility_date = "2025-08-09"
+workers_dev = true
+
+[env.production]
+name = "gufeng-tougao-production"
+
+[log_filters]
+# 启用详细日志
+level = "debug"
+
+[build]
+command = ""
+upload_dir = "."
