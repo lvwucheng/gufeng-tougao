@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>谷风投稿系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>谷风文学投稿</h1>
+            <p>传承韩愈文化，弘扬文学精神</p>
+        </header>
+        
+        <form id="submission-form">
+            <div class="form-group">
+                <label for="title">文章标题</label>
+                <input type="text" id="title" name="title" placeholder="请输入标题（至少5个字）" minlength="5" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="category">文章分类</label>
+                <select id="category" name="category">
+                    <option value="散文">散文</option>
+                    <option value="诗歌">诗歌</option>
+                    <option value="小说">小说</option>
+                    <option value="杂文">杂文</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="author">作者署名（笔名）</label>
+                <input type="text" id="author" name="author" placeholder="用于作品署名（非必填）">
+            </div>
+            
+            <div class="form-group">
+                <label for="content">文章内容</label>
+                <textarea id="content" name="content" rows="10" placeholder="请输入内容（至少50个字）" minlength="50" required></textarea>
+            </div>
+            
+            <p class="notice">所有内容仅存储在本地设备，平台不会收集个人信息</p>
+            
+            <button type="submit">提交创作</button>
+        </form>
+        
+        <div id="success-message" class="hidden">
+            <h2>投稿成功！</h2>
+            <p>您的作品已提交至编辑部，我们将尽快审核</p>
+            <button id="new-submission">再投一篇</button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
