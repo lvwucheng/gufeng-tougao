@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>谷风投稿管理后台</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>谷风投稿管理后台</h1>
+      <div id="login-section">
+        <input type="text" id="username" placeholder="管理员账号">
+        <input type="password" id="password" placeholder="密码">
+        <button id="login-btn">登录</button>
+      </div>
+      <div id="admin-actions" style="display:none;">
+        <button id="logout-btn">退出登录</button>
+      </div>
+    </header>
+    
+    <main id="admin-content" style="display:none;">
+      <div class="controls">
+        <select id="status-filter">
+          <option value="pending">待审稿件</option>
+          <option value="approved">已通过</option>
+          <option value="rejected">已拒绝</option>
+        </select>
+        <button id="refresh-btn">刷新</button>
+      </div>
+      
+      <div class="pagination">
+        <button id="prev-page">上一页</button>
+        <span id="page-info">第1页</span>
+        <button id="next-page">下一页</button>
+      </div>
+      
+      <table id="submissions-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>标题</th>
+            <th>分类</th>
+            <th>作者</th>
+            <th>提交时间</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      
+      <div id="submission-detail" style="display:none;">
+        <h2>投稿详情</h2>
+        <div id="detail-content"></div>
+        <button id="close-detail">关闭详情</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 配置信息
+    const API_BASE = 'https://your-api.workers.dev/functions';
+    let authToken = '';
+    let currentPage = 1;
+    const itemsPerPage = 10;
+    
+    // DOM元素
+    const loginSection = document.getElementById('login-section');
+    const adminActions = document.getElementById('admin-actions');
+    const adminContent = document.getElementById('admin-content');
+    const submissionsTable = document.getElementById('submissions-table').querySelector('tbody');
+    const detailPanel = document.getElementById('submission-detail');
+    const detailContent = document.getElementById('detail-content');
+    
+    // 登录功能
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          authToken = result.token;
+          loginSection.style.display = 'none';
+          adminActions.style.display = 'block';
+          adminContent.style.display = 'block';
+          loadSubmissions();
+        } else {
+          alert('登录失败: ' + (result.error || '未知错误'));
+        }
+      } catch (error) {
+        alert('登录请求失败: ' + error.message);
+      }
+    });
+    
+    // 退出登录
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      authToken = '';
+      loginSection.style.display = 'block';
+      adminActions.style.display = 'none';
+      adminContent.style.display = 'none';
+    });
+    
+    // 加载投稿列表
+    async function loadSubmissions() {
+      const statusFilter = document.getElementById('status-filter').value;
+      
+      try {
+        const response = await fetch(`${API_BASE}/admin`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            action: 'get_submissions',
+            status: statusFilter,
+            page: currentPage,
+            limit: itemsPerPage
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          renderSubmissions(result.data, result.total);
+          document.getElementById('page-info').textContent = 
+            `第${currentPage}页 (共${Math.ceil(result.total / itemsPerPage)}页)`;
+        } else {
+          throw new Error(result.error || '获取数据失败');
+        }
+      } catch (error) {
+        alert('加载失败: ' + error.message);
+      }
+    }
+    
+    // 渲染投稿列表
+    function renderSubmissions(submissions, total) {
+      submissionsTable.innerHTML = '';
+      
+      submissions.forEach(sub => {
+        const row = document.createElement('tr');
+        
+        // 状态样式
+        let statusClass = '';
+        if (sub.status === 'pending') statusClass = 'status-pending';
+        if (sub.status === 'approved') statusClass = 'status-approved';
+        if (sub.status === 'rejected') statusClass = 'status-rejected';
+        
+        row.innerHTML = `
+          <td>${sub.id}</td>
+          <td>${sub.title.substring(0, 20)}${sub.title.length > 20 ? '...' : ''}</td>
+          <td>${sub.category}</td>
+          <td>${sub.author || '匿名'}</td>
+          <td>${new Date(sub.created_at).toLocaleDateString()}</td>
+          <td class="status-cell ${statusClass}">${getStatusText(sub.status)}</td>
+          <td>
+            <button class="btn-detail" data-id="${sub.id}">详情</button>
+            ${sub.status === 'pending' ? `
+              <button class="btn-approve" data-id="${sub.id}">通过</button>
+              <button class="btn-reject" data-id="${sub.id}">拒绝</button>
+            ` : ''}
+          </td>
+        `;
+        
+        submissionsTable.appendChild(row);
+      });
+      
+      // 添加事件监听器
+      document.querySelectorAll('.btn-detail').forEach(btn => {
+        btn.addEventListener('click', () => showSubmissionDetail(btn.dataset.id));
+      });
+      
+      document.querySelectorAll('.btn-approve').forEach(btn => {
+        btn.addEventListener('click', () => updateSubmissionStatus(btn.dataset.id, 'approved'));
+      });
+      
+      document.querySelectorAll('.btn-reject').forEach(btn => {
+        btn.addEventListener('click', () => updateSubmissionStatus(btn.dataset.id, 'rejected'));
+      });
+    }
+    
+    // 显示投稿详情
+    async function showSubmissionDetail(id) {
+      try {
+        // 这里简化处理，实际应用中应请求单个投稿详情
+        const response = await fetch(`${API_BASE}/admin`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            action: 'get_submissions',
+            id: id
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success && result.data.length > 0) {
+          const submission = result.data[0];
+          detailContent.innerHTML = `
+            <h3>${submission.title}</h3>
+            <p><strong>分类:</strong> ${submission.category}</p>
+            <p><strong>作者:</strong> ${submission.author || '匿名'}</p>
+            <p><strong>提交时间:</strong> ${new Date(submission.created_at).toLocaleString()}</p>
+            <p><strong>状态:</strong> ${getStatusText(submission.status)}</p>
+            <div class="content-box">
+              <h4>内容:</h4>
+              <p>${submission.content}</p>
+            </div>
+          `;
+          
+          detailPanel.style.display = 'block';
+        } else {
+          throw new Error('获取详情失败');
+        }
+      } catch (error) {
+        alert('获取详情失败: ' + error.message);
+      }
+    }
+    
+    // 更新投稿状态
+    async function updateSubmissionStatus(id, status) {
+      if (!confirm(`确定要将投稿 #${id} 标记为"${getStatusText(status)}"吗？`)) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/admin`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            action: 'update_status',
+            id: id,
+            status: status
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+          alert('状态更新成功');
+          loadSubmissions();
+        } else {
+          throw new Error(result.error || '更新状态失败');
+        }
+      } catch (error) {
+        alert('操作失败: ' + error.message);
+      }
+    }
+    
+    // 辅助函数：获取状态文本
+    function getStatusText(status) {
+      const statusMap = {
+        'pending': '待审核',
+        'approved': '已通过',
+        'rejected': '已拒绝'
+      };
+      return statusMap[status] || status;
+    }
+    
+    // 绑定事件
+    document.getElementById('refresh-btn').addEventListener('click', loadSubmissions);
+    document.getElementById('status-filter').addEventListener('change', () => {
+      currentPage = 1;
+      loadSubmissions();
+    });
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        loadSubmissions();
+      }
+    });
+    document.getElementById('next-page').addEventListener('click', () => {
+      currentPage++;
+      loadSubmissions();
+    });
+    document.getElementById('close-detail').addEventListener('click', () => {
+      detailPanel.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
