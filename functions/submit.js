@@ -34,7 +34,7 @@ export async function onRequestPost(context) {
 async function storeInSupabase(data) {
     // 替换为您的Supabase信息
     const SUPABASE_URL = "https://ojfmwalxryldzcujehav.supabase.co";
-    const SUPABASE_KEY = "your-supabase-anon-key";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZm13YWx4cnlsZHpjdWplaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MjUwMzMsImV4cCI6MjA3MDMwMTAzM30.5LNX9PpYnqb5dVR5OKas7qr7zjd10IRSBZop4cuNryM";
     
     return fetch(`${SUPABASE_URL}/rest/v1/submissions`, {
         method: 'POST',
