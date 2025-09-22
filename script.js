@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('submission-form');
-    const successMessage = document.getElementById('success-message');
+    // 新增：投稿成功提示框（需在HTML中添加对应元素）
+    const successMessage = document.getElementById('successMessage');
     const newSubmissionBtn = document.getElementById('new-submission');
     
     // 工具函数：生成唯一文件名（避免文件重名）
@@ -74,9 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileToBase64(attachmentFile)
             ]);
 
-            // 添加文件数据到表单
-            formData.image = imageData;
-            formData.attachment = attachmentData;
+            // 添加文件数据到表单（修复：空文件时设为null，避免传undefined）
+            formData.image = imageData || null;
+            formData.attachment = attachmentData || null;
 
             // 显示加载状态
             const submitBtn = form.querySelector('button[type="submit"]');
@@ -92,10 +93,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
-            // 简化成功判断逻辑：只要状态码为2xx就视为成功
+            // 成功判断：状态码2xx视为成功
             if (response.ok) {
-                form.classList.add('hidden');
-                successMessage.classList.remove('hidden');
+                // 显示成功提示
+                if (successMessage) {
+                    successMessage.classList.remove('hidden');
+                    // 点击“确定”跳转到首页
+                    const closeBtn = successMessage.querySelector('#closeSuccess');
+                    if (closeBtn) {
+                        closeBtn.onclick = () => {
+                            successMessage.classList.add('hidden');
+                            window.location.href = '#home'; // 跳转到首页锚点
+                        };
+                    }
+                }
                 return;
             }
 
@@ -112,15 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // 新投稿按钮逻辑
-    newSubmissionBtn.addEventListener('click', () => {
-        form.reset();
-        form.classList.remove('hidden');
-        successMessage.classList.add('hidden');
-        // 重置文件输入框（避免再次提交时保留上次文件）
-        document.getElementById('image').value = '';
-        document.getElementById('attachment').value = '';
-        // 滚动到顶部
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    if (newSubmissionBtn) {
+        newSubmissionBtn.addEventListener('click', () => {
+            form.reset();
+            form.classList.remove('hidden');
+            if (successMessage) successMessage.classList.add('hidden');
+            // 重置文件输入框（避免再次提交时保留上次文件）
+            document.getElementById('image').value = '';
+            document.getElementById('attachment').value = '';
+            // 滚动到顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 });
-    
+
