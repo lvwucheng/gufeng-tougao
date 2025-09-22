@@ -38,7 +38,18 @@
                 <label for="content">文章内容</label>
                 <textarea id="content" name="content" rows="10" placeholder="请输入内容（至少50个字）" minlength="50" required></textarea>
             </div>
-            
+            <!-- 新增：图片上传 -->
+<div class="form-group">
+    <label for="image">封面图片（可选）</label>
+    <input type="file" id="image" name="image" accept="image/*">
+</div>
+
+<!-- 新增：附件上传 -->
+<div class="form-group">
+    <label for="attachment">附件（可选，如文档、手稿等）</label>
+    <input type="file" id="attachment" name="attachment" accept=".doc,.docx,.pdf,.txt">
+</div>
+
             <p class="notice">所有内容仅存储在本地设备，平台不会收集个人信息</p>
             
             <button type="submit">提交创作</button>
