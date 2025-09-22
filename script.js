@@ -74,15 +74,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify(formData) // 包含文件数据的完整表单
             });
-            
+           // 关键：先判断响应是否正常，再解析JSON
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || '提交失败');
+    }
+
+    const result = await response.json();
+    if (result.success !== true) {
+      throw new Error('提交结果异常，请重试');
+    }
+
+    // 到这里才是真正成功，显示提示
+    form.classList.add('hidden');
+    successMessage.classList.remove('hidden'); 
             if (!response.ok) {
                 throw new Error('提交失败，请重试');
             }
-            
-            // 6. 显示成功消息（保留原有逻辑，现在提交成功后会正常显示！）
-            form.classList.add('hidden');
-            successMessage.classList.remove('hidden');
-            
+    
         } catch (error) {
             // 错误处理（保留原有逻辑）
             alert(error.message);
