@@ -171,16 +171,7 @@
       </div>
     </div>
   </section>
-<!-- 投稿成功提示（初始隐藏） -->
-<div id="successMessage" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
-  <div class="bg-white p-6 rounded-lg shadow-xl text-center">
-    <h3 class="text-xl font-bold text-primary mb-2">投稿成功！</h3>
-    <p class="mb-4">您的作品已提交，我们会尽快审核～</p>
-    <button id="closeSuccess" class="px-4 py-2 bg-primary text-white rounded hover:bg-secondary transition-colors">
-      确定
-    </button>
-  </div>
-</div>
+
 
   <!-- 核心投稿表单（与script.js完全对接） -->
   <section id="submit" class="py-16 bg-gray-50">
@@ -322,5 +313,15 @@
   <script src="script.js"></script>
   <!-- 引入Cloudflare提交逻辑 -->
   <script src="submit.js"></script>
+  <!-- 投稿成功提示（初始隐藏） -->
+<div id="successMessage" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50 hidden">
+  <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+    <h3 class="text-xl font-bold text-primary mb-2">投稿成功！</h3>
+    <p class="mb-4">您的作品已提交，我们会尽快审核～</p>
+    <button id="closeSuccess" class="px-4 py-2 bg-primary text-white rounded hover:bg-secondary transition-colors">
+      确定
+    </button>
+  </div>
+</div>
 </body>
 </html>
