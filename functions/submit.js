@@ -61,8 +61,8 @@ export async function onRequestPost(context) {
         // 3. 【修改】存储到Supabase数据库（新增文件URL字段）
         const { supabaseData, error } = await storeInSupabase({
             ...data, // 保留原有文字数据
-            image_url: imageUrl,    // 新增：图片URL
-            attachment_url: attachmentUrl // 新增：附件URL
+            image: imageUrl,    // 新增：图片URL
+            file_url: attachmentUrl // 新增：附件URL
         });
 
         if (error) {
@@ -110,8 +110,8 @@ async function storeInSupabase(data) {
             author: data.author,
             content: data.content,
             created_at: new Date().toISOString(),
-            image_url: data.image_url,    // 新增：存储图片URL
-            attachment_url: data.attachment_url // 新增：存储附件URL
+            images: data.image_url ? [data.image_url] : [],    // 新增：存储图片URL
+            file_url: data.attachment_url // 新增：存储附件URL
         })
     });
 
