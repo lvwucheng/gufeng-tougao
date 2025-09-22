@@ -265,4 +265,52 @@
           </div>
 
           <div>
-            <label for="adminPassword"
+            <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">密码 <span class="text-red-500">*</span></label>
+            <input type="password" id="adminPassword" name="adminPassword" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="请输入管理员密码" required>
+          </div>
+
+          <div class="pt-4">
+            <button type="submit" class="w-full bg-primary hover:bg-secondary text-white font-semibold py-3 px-4 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+              登录管理后台
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="bg-dark text-white py-10">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-6 md:mb-0">
+          <div class="flex items-center space-x-2 mb-2">
+            <i class="fa fa-book text-primary text-xl"></i>
+            <h2 class="text-lg font-bold">谷风文学投稿系统</h2>
+          </div>
+          <p class="text-gray-400 text-sm">传承文化，弘扬文学</p>
+        </div>
+        <div class="flex space-x-6">
+          <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+            <i class="fa fa-weixin text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+            <i class="fa fa-weibo text-xl"></i>
+          </a>
+          <a href="#" class="text-gray-400 hover:text-primary transition-colors">
+            <i class="fa fa-envelope text-xl"></i>
+          </a>
+        </div>
+      </div>
+      <div class="border-t border-gray-700 mt-6 pt-6 text-center text-gray-400 text-sm">
+        <p>© 2023 谷风文学投稿系统 版权所有</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- 引入script.js - 关键交互逻辑 -->
+  <script src="script.js"></script>
+  <!-- 引入Cloudflare提交逻辑 -->
+  <script src="submit.js"></script>
+</body>
+</html>
