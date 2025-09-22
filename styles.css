@@ -107,6 +107,54 @@ button:hover {
 .hidden {
     display: none;
 }
+/* 隐藏类（核心） */
+.hidden {
+  display: none !important;
+}
+
+/* 表单组样式优化 */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+/* 上传控件样式 */
+input[type="file"] {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 成功提示样式 */
+#success-message {
+  text-align: center;
+  padding: 2rem;
+  border: 1px solid #d4edda;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+  margin-top: 1rem;
+}
+
+#success-message h2 {
+  color: #28a745;
+  margin-bottom: 1rem;
+}
+
+#new-submission {
+  margin-top: 1rem;
+  padding: 0.8rem 1.5rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#new-submission:hover {
+  background-color: #0056b3;
+}
 
 /* 响应式设计 */
 @media (max-width: 600px) {
