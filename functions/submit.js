@@ -19,40 +19,39 @@ export async function onRequestPost(context) {
 
         // 2.2 【新增】工具函数：将Base64文件上传到Supabase存储桶
         const uploadFile = async (fileData) => {
-            if (!fileData) return null; // 无文件则返回null
-            
-            try {
-                // 转换Base64为二进制数据
-                const binaryData = Uint8Array.from(atob(fileData.base64), c => c.charCodeAt(0));
-                
-                // 调用Supabase Storage API上传文件
-                const uploadResponse = await fetch(
-                    `${SUPABASE_URL}/storage/v1/object/${BUCKET_NAME}/${fileData.fileName}`,
-                    {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': fileData.type || 'application/octet-stream',
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`,
-                        },
-                        body: binaryData
-                    }
-                );
+  if (!fileData) return null;
+  
+  try {
+    const binaryData = Uint8Array.from(atob(fileData.base64), c => c.charCodeAt(0));
+    
+    // 替换为正确的Supabase Storage上传URL（注意存储桶名是submission-files）
+    const uploadResponse = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/submission-files/${fileData.fileName}`, // 这里要写对存储桶名
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': fileData.type || 'application/octet-stream',
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        },
+        body: binaryData
+      }
+    );
 
-                if (!uploadResponse.ok) {
-                    const errorDetails = await uploadResponse.text();
-                    throw new Error(`文件上传失败: ${errorDetails}`);
-                }
+    if (!uploadResponse.ok) {
+      const errorDetails = await uploadResponse.text();
+      throw new Error(`文件上传失败: ${errorDetails}`);
+    }
 
-                // 上传成功后，返回文件的公开访问URL
-                return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${fileData.fileName}`;
-            } catch (err) {
-                console.error("文件上传错误:", err);
-                throw new Error(`文件处理失败: ${err.message}`);
-            }
-        };
+    // 返回文件的公开访问URL（格式要对）
+    return `${SUPABASE_URL}/storage/v1/object/public/submission-files/${fileData.fileName}`;
+  } catch (err) {
+    console.error("文件上传错误:", err);
+    throw new Error(`文件处理失败: ${err.message}`);
+  }
+};
 
-        // 2.3 【新增】并行上传图片和附件
+              // 2.3 【新增】并行上传图片和附件
         const [imageUrl, attachmentUrl] = await Promise.all([
             uploadFile(data.image),   // 处理图片
             uploadFile(data.attachment) // 处理附件
