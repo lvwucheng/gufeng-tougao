@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const successMessage = document.getElementById('success-message');
     const newSubmissionBtn = document.getElementById('new-submission');
     
-    // 【新增】工具函数：生成唯一文件名（避免文件重名）
+    // 工具函数：生成唯一文件名（避免文件重名）
     function getUniqueFileName(originalName) {
         if (!originalName) return '';
         const timestamp = new Date().getTime(); // 时间戳确保唯一
@@ -12,32 +12,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${timestamp}-${randomStr}.${extension}`;
     }
 
-    // 【新增】工具函数：将文件转为 Base64（传给 Cloudflare 再处理上传）
-    // 原因：表单数据+文件需统一格式传给 /submit 接口，Base64 是兼容方案
+    // 工具函数：将文件转为 Base64（增加图片格式验证）
     function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => { // 改为只resolve，避免reject阻断流程
             if (!file) {
-                resolve(null); // 无文件则返回 null
+                resolve(null);
                 return;
             }
+            
+            // 图片格式验证
+            if (file.type.startsWith('image/') && 
+                !['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+                alert('图片格式不支持，仅允许jpg、png、gif、webp');
+                resolve(null);
+                return;
+            }
+            
+            // 附件大小限制（10MB以内）
+            if (file.size > 10 * 1024 * 1024) {
+                alert('文件过大，最大支持10MB');
+                resolve(null);
+                return;
+            }
+
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => {
-                // 返回：{ base64: 编码字符串, fileName: 唯一文件名, type: 文件类型 }
                 resolve({
-                    base64: reader.result.split(',')[1], // 去掉前缀（如 data:image/png;base64,）
+                    base64: reader.result.split(',')[1],
                     fileName: getUniqueFileName(file.name),
                     type: file.type
                 });
             };
-            reader.onerror = (error) => reject(error);
+            reader.onerror = () => {
+                alert('文件读取失败，请重试');
+                resolve(null);
+            };
         });
     }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        // 1. 获取表单基础数据（保留原有逻辑）
+        // 获取表单基础数据
         const formData = {
             title: document.getElementById('title').value,
             category: document.getElementById('category').value,
@@ -46,54 +63,47 @@ document.addEventListener('DOMContentLoaded', () => {
             timestamp: new Date().toISOString()
         };
 
-        // 【新增】2. 获取上传的文件并转为 Base64
+        // 获取上传的文件并转为 Base64
         const imageFile = document.getElementById('image').files[0];
         const attachmentFile = document.getElementById('attachment').files[0];
         
         try {
-            // 并行处理两个文件（图片+附件），效率更高
+            // 并行处理两个文件
             const [imageData, attachmentData] = await Promise.all([
                 fileToBase64(imageFile),
                 fileToBase64(attachmentFile)
             ]);
 
-            // 【新增】3. 将文件数据添加到 formData（传给 Cloudflare）
-            formData.image = imageData; // 图片信息（含 Base64、文件名、类型）
-            formData.attachment = attachmentData; // 附件信息
+            // 添加文件数据到表单
+            formData.image = imageData;
+            formData.attachment = attachmentData;
 
-            // 4. 显示加载状态（保留原有逻辑）
+            // 显示加载状态
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.textContent = '提交中...';
             submitBtn.disabled = true;
             
-            // 5. 发送到 Cloudflare 函数（保留原有逻辑，仅数据多了 image/attachment）
+            // 发送到Cloudflare函数
             const response = await fetch('/submit', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData) // 包含文件数据的完整表单
+                body: JSON.stringify(formData)
             });
-           // 关键：先判断响应是否正常，再解析JSON
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || '提交失败');
-    }
 
-    const result = await response.json();
-    if (result.success !== true) {
-      throw new Error('提交结果异常，请重试');
-    }
-
-    // 到这里才是真正成功，显示提示
-    form.classList.add('hidden');
-    successMessage.classList.remove('hidden'); 
-            if (!response.ok) {
-                throw new Error('提交失败，请重试');
+            // 简化成功判断逻辑：只要状态码为2xx就视为成功
+            if (response.ok) {
+                form.classList.add('hidden');
+                successMessage.classList.remove('hidden');
+                return;
             }
-    
+
+            // 状态码错误时的处理
+            const errorData = await response.json().catch(() => ({ error: '提交失败' }));
+            throw new Error(errorData.error || '提交失败，请重试');
+            
         } catch (error) {
-            // 错误处理（保留原有逻辑）
             alert(error.message);
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.textContent = '提交创作';
@@ -101,10 +111,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // 新投稿按钮（保留原有逻辑）
+    // 新投稿按钮逻辑
     newSubmissionBtn.addEventListener('click', () => {
         form.reset();
         form.classList.remove('hidden');
         successMessage.classList.add('hidden');
+        // 重置文件输入框（避免再次提交时保留上次文件）
+        document.getElementById('image').value = '';
+        document.getElementById('attachment').value = '';
+        // 滚动到顶部
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 });
+    
