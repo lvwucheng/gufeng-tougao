@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>测试投稿提示</title>
+    <style>
+        .hidden {
+            display: none !important;
+        }
+        #success-message {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid green;
+            background: #f0f9eb;
+        }
+    </style>
+</head>
+<body>
+    <form id="test-form">
+        <input type="text" required>
+        <button type="submit">提交测试</button>
+    </form>
+    <div id="success-message" class="hidden">
+        <h2>投稿成功！</h2>
+    </div>
+
+    <script>
+        const form = document.getElementById('test-form');
+        const successMessage = document.getElementById('success-message');
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            form.classList.add('hidden');
+            successMessage.classList.remove('hidden');
+            console.log('测试：显示成功提示');
+        });
+    </script>
+</body>
+</html>
