@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Supabase 配置（建议用环境变量，避免硬编码）
+export async function onRequest(context) {
 const supabaseUrl = context.env.SUPABASE_URL;
   const supabaseKey = context.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
+}
 export async function onRequest(context) {
   // 简单登录验证（实际需结合 JWT，这里简化）
   if (!isLoggedIn(context.request)) {
