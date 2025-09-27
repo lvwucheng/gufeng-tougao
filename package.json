@@ -1,0 +1,7 @@
+{
+  "name": "gufeng-tougao",
+  "version": "1.0.0",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.38.4" // 安装最新版本的 Supabase JS 库
+  }
+}
