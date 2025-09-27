@@ -52,7 +52,7 @@
         <a href="#home" class="text-dark hover:text-primary transition-colors font-medium">首页</a>
         <a href="#guide" class="text-dark hover:text-primary transition-colors font-medium">投稿指南</a>
         <a href="#submit" class="text-dark hover:text-primary transition-colors font-medium">我要投稿</a>
-        <a href="#admin" class="text-dark hover:text-primary transition-colors font-medium">管理员</a>
+        <a href="#admin" class="text-dark hover:text-primary transition-colors font-medium">管理登录</a>
       </nav>
       <button class="md:hidden text-dark text-xl" id="menuToggle">
         <i class="fa fa-bars"></i>
@@ -64,7 +64,7 @@
         <a href="#home" class="block py-2 text-dark hover:text-primary transition-colors">首页</a>
         <a href="#guide" class="block py-2 text-dark hover:text-primary transition-colors">投稿指南</a>
         <a href="#submit" class="block py-2 text-dark hover:text-primary transition-colors">我要投稿</a>
-        <a href="#admin" class="block py-2 text-dark hover:text-primary transition-colors">管理员</a>
+        <a href="#admin" class="block py-2 text-dark hover:text-primary transition-colors">管理登录</a>
       </div>
     </div>
   </header>
@@ -198,25 +198,27 @@
                 <option value="诗歌">诗歌</option>
                 <option value="小说">小说</option>
                 <option value="杂文">杂文</option>
+                <option value="故事">故事</option>
+                <option value="通讯">通讯</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label for="author" class="block text-sm font-medium text-gray-700 mb-1">作者署名（笔名）</label>
+            <label for="author" class="block text-sm font-medium text-gray-700 mb-1">作者简介</label>
             <!-- 作者ID：与script.js中的author选择器一致 -->
-            <input type="text" id="author" name="author" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="用于作品署名（非必填）">
+            <input type="text" id="author" name="author" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="您的大名与简历">
           </div>
 
           <div>
             <label for="content" class="block text-sm font-medium text-gray-700 mb-1">文章内容 <span class="text-red-500">*</span></label>
             <!-- 内容ID：与script.js中的content选择器一致 -->
-            <textarea id="content" name="content" rows="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="请输入内容（至少50个字）" minlength="50" required></textarea>
+            <textarea id="content" name="content" rows="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all" placeholder="请输入或粘贴文章内容，如以附件形式上传，此处填写“参看附件”。" minlength="4" required></textarea>
           </div>
 
           <!-- 图片上传：ID与script.js中的image选择器一致 -->
           <div>
-            <label for="image" class="block text-sm font-medium text-gray-700 mb-1">封面图片（可选）</label>
+            <label for="image" class="block text-sm font-medium text-gray-700 mb-1">相关图片（可选）</label>
             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-primary transition-all">
               <div class="space-y-1 text-center">
                 <i class="fa fa-cloud-upload text-gray-400 text-3xl"></i>
@@ -289,7 +291,7 @@
             <i class="fa fa-book text-primary text-xl"></i>
             <h2 class="text-lg font-bold">谷风文学投稿系统</h2>
           </div>
-          <p class="text-gray-400 text-sm">传承文化，弘扬文学</p>
+          <p class="text-gray-400 text-sm">传承韩愈文化，弘扬文学艺术</p>
         </div>
         <div class="flex space-x-6">
           <a href="#" class="text-gray-400 hover:text-primary transition-colors">
