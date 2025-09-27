@@ -15,7 +15,7 @@ export async function onRequest(context) {
     // 【重要】实际项目中，这里应该从数据库或环境变量中验证账号密码
     // 示例：硬编码一个管理员账号（仅测试用，生产环境必须替换）
     const validUsername = 'admin';
-    const validPassword = 'your_secure_password'; // 建议在 Pages 控制台配置为环境变量
+    const validPassword = '123456'; // 建议在 Pages 控制台配置为环境变量
 
     if (username === validUsername && password === validPassword) {
       // 登录成功：可以生成 JWT token 并返回（这里简化处理）
