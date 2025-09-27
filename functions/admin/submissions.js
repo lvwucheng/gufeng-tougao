@@ -1,7 +1,13 @@
-// 获取投稿列表接口：/admin/submissions
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase 配置（建议用环境变量，避免硬编码）
+const supabaseUrl = '你的 Supabase 项目URL';
+const supabaseKey = '你的 Supabase 匿名密钥';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 export async function onRequest(context) {
-  // 简单验证：实际项目中应检查登录状态（如 JWT token）
-  if (!isLoggedIn(context.request)) { // 需要实现登录状态检查函数
+  // 简单登录验证（实际需结合 JWT，这里简化）
+  if (!isLoggedIn(context.request)) {
     return new Response(JSON.stringify({ error: '请先登录' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
@@ -9,20 +15,27 @@ export async function onRequest(context) {
   }
 
   try {
-    // 从数据库获取投稿数据（这里简化为模拟数据）
-    // 实际项目中应连接你的数据库（如 Cloudflare D1、PlanetScale 等）
-    const submissions = [
-      {
-        id: '1',
-        title: '测试文章',
-        author: '匿名',
-        category: '散文',
-        status: '待审核',
-        timestamp: '2023-10-01T08:00:00Z'
-      }
-    ];
+    // 从 Supabase 数据库拉取投稿表数据
+    const { data, error } = await supabase
+      .from('submissions') // 投稿表名，需与前端提交时一致
+      .select('*'); // 拉取所有字段
 
-    return new Response(JSON.stringify(submissions), {
+    if (error) throw error;
+
+    // 格式化后返回给前端
+    const formattedData = data.map(item => ({
+      id: item.id,
+      title: item.title,
+      author: item.author,
+      category: item.category,
+      content: item.content,
+      timestamp: item.timestamp, // 新增：显示投稿时间
+      status: item.status || '待审核', // 新增：默认待审核
+      image: item.image, // 封面图数据
+      attachment: item.attachment // 附件数据
+    }));
+
+    return new Response(JSON.stringify(formattedData), {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
@@ -33,9 +46,7 @@ export async function onRequest(context) {
   }
 }
 
-// 简单的登录状态检查（实际需用 JWT 验证）
+// 简化的登录状态检查（实际需用 JWT 验证）
 function isLoggedIn(request) {
-  // 从请求头或 Cookie 中获取 token 并验证
-  // 这里简化为直接返回 true（仅测试用）
-  return true;
+  return true; // 测试阶段暂时放行，生产需替换为真实验证
 }
