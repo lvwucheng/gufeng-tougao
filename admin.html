@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>谷风文学管理后台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <header class="bg-white shadow-sm py-4">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold">谷风文学管理后台</h1>
+      <button id="logoutBtn" class="text-primary hover:text-primary/80">退出登录</button>
+    </div>
+  </header>
+  <main class="container mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold mb-6">投稿管理</h2>
+    <div id="submissionList" class="space-y-4">
+      <!-- 投稿列表由 JS 动态渲染 -->
+    </div>
+  </main>
+  <script>
+    // 渲染投稿列表逻辑（需从后端接口获取数据）
+    async function fetchSubmissions() {
+      const response = await fetch('/admin/submissions');
+      const submissions = await response.json();
+      const listEl = document.getElementById('submissionList');
+      listEl.innerHTML = submissions.map(sub => `
+        <div class="border rounded p-4">
+          <h3 class="font-bold">${sub.title}</h3>
+          <p class="text-sm text-gray-500">作者：${sub.author} | 状态：${sub.status}</p>
+          <button class="mt-2 text-primary">审核</button>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchSubmissions);
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
