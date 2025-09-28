@@ -140,6 +140,9 @@
     }
 
     // 拉取投稿详情（含图片、附件）
+    document.addEventListener('DOMContentLoaded', () => {
+  fetchSubmissionDetail(); // 页面加载后立即拉取详情
+});
     async function fetchSubmissionDetail() {
       try {
         // 示例：从接口请求详情（需后端提供包含存储桶资源的接口）
