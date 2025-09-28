@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>谷风文学管理后台</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- 引入 Font Awesome 用于图标 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50">
@@ -17,14 +16,11 @@
   </header>
   <main class="container mx-auto px-4 py-8">
     <h2 class="text-2xl font-bold mb-6">投稿管理</h2>
-    <!-- 加载状态 -->
     <div id="loading" class="hidden text-center py-8">
       <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
       <p class="mt-2 text-gray-600">加载中...</p>
     </div>
-    <!-- 投稿列表 -->
     <div id="submissionList" class="space-y-4"></div>
-    <!-- 详情模态框 -->
     <div id="detailModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
       <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-auto">
         <div class="flex justify-between items-center mb-4">
@@ -49,11 +45,10 @@
     </div>
   </main>
   <script>
-    // 时间格式化函数 - 修复时间显示问题
+    // 时间格式化函数
     function formatDate(createdAt) {
       if (!createdAt) return '未知时间';
       const date = new Date(createdAt);
-      // 处理数据库返回的created_at字段
       return date.toString() === 'Invalid Date' 
         ? '时间格式错误' 
         : date.toLocaleString('zh-CN', {
@@ -72,7 +67,6 @@
         'pending': '待审核',
         'approved': '已通过',
         'rejected': '已拒绝',
-        // 兼容可能的其他状态
         '待审核': '待审核',
         '已通过': '已通过',
         '已拒绝': '已拒绝'
@@ -112,7 +106,6 @@
           return;
         }
 
-        // 生成列表HTML
         listEl.innerHTML = submissions.map(sub => `
           <div class="border rounded-lg p-4 hover:shadow-md transition-shadow" data-id="${sub.id}">
             <div class="flex justify-between items-start">
@@ -125,7 +118,7 @@
               作者：${sub.author || '匿名'} | 
               时间：${formatDate(sub.timestamp)}
             </p>
-            <button class="mt-2 text-primary view-detail" data-id="${String(sub.id) === id}">查看详情</button>
+            <button class="mt-2 text-primary view-detail" data-id="${sub.id}">查看详情</button>
           </div>
         `).join('');
 
@@ -143,7 +136,6 @@
         const response = await fetch('/admin/submissions');
         const allSubmissions = await response.json();
         
-        // 关键修复：用数字类型匹配ID
         const submission = allSubmissions.find(sub => parseInt(sub.id) === id);
         
         if (!submission) {
@@ -158,39 +150,33 @@
         const modalImage = document.getElementById('modalImage');
         const modalContent = document.getElementById('modalContent');
 
-        // 填充模态框数据
         modalTitle.textContent = submission.title || '无标题';
         modalAuthor.textContent = `作者：${submission.author || '匿名'}`;
         modalTime.textContent = `投稿时间：${formatDate(submission.timestamp)}`;
         modalContent.textContent = submission.content || '无内容';
 
-        // 处理封面图
         if (submission.image && submission.image.base64 && submission.image.type) {
           modalImage.innerHTML = `<img src="data:${submission.image.type};base64,${submission.image.base64}" alt="投稿封面图" class="max-w-full h-auto rounded">`;
         } else {
           modalImage.innerHTML = '<p class="text-gray-500">无封面图</p>';
         }
 
-        // 显示模态框
         modal.classList.remove('hidden');
 
-        // 关闭模态框事件（使用once确保不会重复绑定）
         document.getElementById('closeModal').onclick = () => {
           modal.classList.add('hidden');
         };
 
-        // 审核通过事件
         document.getElementById('approveBtn').onclick = async () => {
           await updateSubmissionStatus(id, 'approved');
           modal.classList.add('hidden');
-          fetchSubmissions(); // 刷新列表
+          fetchSubmissions();
         };
 
-        // 审核拒绝事件
         document.getElementById('rejectBtn').onclick = async () => {
           await updateSubmissionStatus(id, 'rejected');
           modal.classList.add('hidden');
-          fetchSubmissions(); // 刷新列表
+          fetchSubmissions();
         };
 
       } catch (error) {
@@ -224,12 +210,9 @@
       }
     }
 
-    // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', () => {
-      // 加载投稿列表
       fetchSubmissions();
 
-      // 点击查看详情事件（使用事件委托处理动态元素）
       document.addEventListener('click', (e) => {
         if (e.target.classList.contains('view-detail')) {
           const subId = parseInt(e.target.dataset.id); 
@@ -237,7 +220,6 @@
         }
       });
 
-      // 退出登录
       document.getElementById('logoutBtn').addEventListener('click', () => {
         window.location.href = 'index.html';
       });
@@ -245,4 +227,5 @@
   </script>
 </body>
 </html>
+
     
