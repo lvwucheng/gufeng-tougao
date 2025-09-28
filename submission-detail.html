@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* 基础样式（可复用之前的 admin.css 或自定义） */
+    /* 基础样式 */
     body {
       background-color: #f5f7fa;
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -130,6 +130,9 @@
   </div>
 
   <script>
+    // 配置后端接口域名（需替换为实际地址）
+    const API_DOMAIN = 'https://ojfmwalxryldzcujehav.supabase.co'; // 示例：替换为你的后端接口域名
+
     // 获取 URL 中的投稿 ID
     const urlParams = new URLSearchParams(window.location.search);
     const submissionId = urlParams.get('id');
@@ -139,14 +142,25 @@
       window.location.href = 'admin.html';
     }
 
-    // 拉取投稿详情（含图片、附件）
+    // 页面加载后拉取详情
     document.addEventListener('DOMContentLoaded', () => {
-  fetchSubmissionDetail(); // 页面加载后立即拉取详情
-});
+      fetchSubmissionDetail();
+    });
+
+    // 拉取投稿详情（含图片、附件）
     async function fetchSubmissionDetail() {
       try {
-        // 示例：从接口请求详情（需后端提供包含存储桶资源的接口）
-        const response = await fetch(`/api/submissions/${submissionId}`);
+        // 发起绝对路径请求
+        const response = await fetch(`${API_DOMAIN}/api/submissions/${submissionId}`);
+        
+        // 打印响应状态和内容（辅助调试）
+        console.log('接口响应状态:', response.status);
+        console.log('接口响应内容:', await response.text());
+
+        if (!response.ok) {
+          throw new Error(`接口返回错误：${response.status}`);
+        }
+
         const submission = await response.json();
 
         // 填充标题和元信息
@@ -187,8 +201,7 @@
           document.querySelectorAll('.download-btn').forEach(btn => {
             btn.addEventListener('click', () => {
               const url = btn.dataset.url;
-              // 新建标签页下载（或用 fetch 自定义下载）
-              window.open(url, '_blank');
+              window.open(url, '_blank'); // 新标签页下载
             });
           });
         } else {
@@ -197,7 +210,7 @@
 
       } catch (error) {
         console.error('加载详情失败:', error);
-        alert('加载详情失败，请重试');
+        alert('加载详情失败，请重试\n错误原因：' + error.message);
       }
     }
 
@@ -221,7 +234,7 @@
     // 更新投稿状态
     async function updateSubmissionStatus(status) {
       try {
-        const response = await fetch('/api/submissions/status', {
+        const response = await fetch(`${API_DOMAIN}/api/submissions/status`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: submissionId, status })
@@ -237,9 +250,6 @@
         alert('操作失败: ' + error.message);
       }
     }
-
-    // 页面加载时拉取详情
-    fetchSubmissionDetail();
   </script>
 </body>
 </html>
