@@ -140,10 +140,11 @@
     // 显示投稿详情
     async function showSubmissionDetail(id) {
       try {
-        // 获取最新的投稿数据
         const response = await fetch('/admin/submissions');
         const allSubmissions = await response.json();
-        const submission = allSubmissions.find(sub => sub.id === id);
+        
+        // 关键修复：用数字类型匹配ID
+        const submission = allSubmissions.find(sub => parseInt(sub.id) === id);
         
         if (!submission) {
           alert('未找到该投稿数据');
@@ -160,7 +161,7 @@
         // 填充模态框数据
         modalTitle.textContent = submission.title || '无标题';
         modalAuthor.textContent = `作者：${submission.author || '匿名'}`;
-        modalTime.textContent = `投稿时间：${formatDate(submission.created_at)}`;
+        modalTime.textContent = `投稿时间：${formatDate(submission.timestamp)}`;
         modalContent.textContent = submission.content || '无内容';
 
         // 处理封面图
@@ -231,8 +232,8 @@
       // 点击查看详情事件（使用事件委托处理动态元素）
       document.addEventListener('click', (e) => {
         if (e.target.classList.contains('view-detail')) {
-          const subId = e.target.dataset.id;
-          showSubmissionDetail(subId);
+          const subId = parseInt(e.target.dataset.id); 
+          showSubmissionDetail(subId); 
         }
       });
 
