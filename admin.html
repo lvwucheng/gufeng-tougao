@@ -419,7 +419,7 @@
               作者：${sub.author || '匿名'} | 
               时间：${formatDate(sub.timestamp)}
             </p>
-            <button class="view-detail" data-id="${sub.id}">查看详情</button>
+            <a href="submission-detail.html?id=${sub.id}" class="view-detail">查看详情</a>
           </div>
         `).join('');
 
