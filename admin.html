@@ -74,7 +74,13 @@
                 ${sub.status}
               </span>
             </div>
-            <p class="text-sm text-gray-500 mt-1">作者：${sub.author} | 时间：${new Date(sub.timestamp).toLocaleString()}</p>
+            <p class="text-sm text-gray-500 mt-1">作者：${sub.author} | 时间：${function formatDate(createdAt) 
+  if (!createdAt) return '未知时间';
+  const date = new Date(createdAt);
+  return date.toString() === 'Invalid Date' 
+    ? '时间格式错误' 
+    : date.toLocaleString();
+}</p>
             <button class="mt-2 text-primary view-detail">查看详情</button>
           </div>
         `).join('');
@@ -107,7 +113,7 @@
 
       modalTitle.textContent = submission.title;
       modalAuthor.textContent = `作者：${submission.author}`;
-      modalTime.textContent = `投稿时间：${new Date(submission.timestamp).toLocaleString()}`;
+      modalTime.textContent = `时间：${formatDate(sub.created_at)}`;
       modalContent.textContent = submission.content;
 
       // 处理封面图
