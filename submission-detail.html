@@ -6,6 +6,7 @@
   <title>投稿详情</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     /* 保持原有样式不变 */
     body {
@@ -136,9 +137,11 @@
   <script>
     // Supabase 配置
     const SUPABASE_URL = 'https://ojfmwalxryldzcujehav.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZm13YWx4cnlsZHpjdWplaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MjUwMzMsImV4cCI6MjA3MDMwMTAzM30.5LNX9PpYnqb5dVR5OKas7qr7zjd10IRSBZop4cuNryM';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZm13YWx4cnlsZHpjdWplaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MjUwMzMsImV4cCI6MjA3MDMwMTAzM30.5LNX9PpYnqb5dVR5OKas7qr7zjd10IRSBZop4cuNryM'; // 替换为你的 anon 密钥
     const STORAGE_BUCKET = 'submission-files';
-    const MINI_PROGRAM_IMAGE_FOLDER = 'submission-images';
+
+    // 初始化 Supabase 客户端（使用全局 supabase 对象）
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // 获取 URL 中的投稿 ID
     const urlParams = new URLSearchParams(window.location.search);
@@ -154,7 +157,7 @@
       fetchSubmissionDetail();
     });
 
-    // 拉取投稿详情（优化图片和附件处理）
+    // 拉取投稿详情（使用 Signed URL）
     async function fetchSubmissionDetail() {
       try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
@@ -181,23 +184,20 @@
         document.getElementById('detailMeta').textContent = 
           `作者：${submission.author || '匿名'} | 投稿时间：${new Date(submission.created_at).toLocaleString()}`;
 
-        // 填充封面图（优化路径处理）
+        // 填充封面图（生成 Signed URL）
         const imageContainer = document.getElementById('detailImage');
         if (submission.images && submission.images.length > 0) {
-          let imageUrl = submission.images[0];
-          // 确保 URL 格式正确（处理可能的重复路径）
-          if (!imageUrl.startsWith('http')) {
-            // 处理网页端图片路径
-            const basePath = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/`;
-            // 避免路径重复拼接
-            imageUrl = imageUrl.startsWith(STORAGE_BUCKET) 
-              ? `${SUPABASE_URL}/storage/v1/object/public/${imageUrl}`
-              : basePath + imageUrl;
-          }
-          // 显示图片并添加错误处理
+          const imagePath = submission.images[0];
+          // 生成带签名的临时图片 URL（有效期 60 秒）
+          const { data: signedImage, error: imageError } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(imagePath, 60);
+
+          if (imageError) throw imageError;
+
           imageContainer.innerHTML = `
-            <img src="${imageUrl}" alt="投稿封面图" 
-                 onError="this.src=''; document.getElementById('detailImage').innerHTML='<p class=error-text>图片加载失败，点击查看原始链接：<a href=${imageUrl} target=_blank>${imageUrl}</a></p>'">
+            <img src="${signedImage.signedUrl}" alt="投稿封面图" 
+                 onError="this.src=''; this.closest('.image-container').innerHTML='<p class=error-text>图片加载失败，路径：${imagePath}</p>'">
           `;
         } else {
           imageContainer.innerHTML = '<p class="text-gray-500">无封面图</p>';
@@ -206,20 +206,18 @@
         // 填充内容
         document.getElementById('detailContent').textContent = submission.content || '无内容';
 
-        // 填充附件（优化下载链接）
+        // 填充附件（生成 Signed URL）
         const attachmentList = document.getElementById('attachmentList');
         if (submission.file_url) {
-          let attachUrl = submission.file_url;
-          const filename = attachUrl.split('/').pop();
-          
-          // 确保附件 URL 格式正确
-          if (!attachUrl.startsWith('http')) {
-            const basePath = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/`;
-            attachUrl = attachUrl.startsWith(STORAGE_BUCKET)
-              ? `${SUPABASE_URL}/storage/v1/object/public/${attachUrl}`
-              : basePath + attachUrl;
-          }
+          const attachPath = submission.file_url;
+          // 生成带签名的临时附件 URL（有效期 60 秒）
+          const { data: signedAttach, error: attachError } = await supabase.storage
+            .from(STORAGE_BUCKET)
+            .createSignedUrl(attachPath, 60);
 
+          if (attachError) throw attachError;
+
+          const filename = attachPath.split('/').pop();
           attachmentList.innerHTML = `
             <div class="attachment-item">
               <div class="attachment-icon">
@@ -229,26 +227,15 @@
                 <div class="attachment-name">${filename}</div>
                 <div class="attachment-size">大小：${formatSize(0)}</div>
               </div>
-              <button class="download-btn" data-url="${attachUrl}">
+              <button class="download-btn" data-url="${signedAttach.signedUrl}">
                 下载
               </button>
             </div>
           `;
 
-          // 绑定附件下载事件（添加错误处理）
-          document.querySelector('.download-btn').addEventListener('click', async () => {
-            try {
-              // 先验证链接有效性
-              const test = await fetch(attachUrl, { method: 'HEAD' });
-              if (test.ok) {
-                window.open(attachUrl, '_blank');
-              } else {
-                throw new Error('文件链接无效');
-              }
-            } catch (e) {
-              alert('下载失败，尝试直接访问链接：\n' + attachUrl);
-              window.open(attachUrl, '_blank');
-            }
+          // 绑定下载事件
+          document.querySelector('.download-btn').addEventListener('click', () => {
+            window.open(signedAttach.signedUrl, '_blank');
           });
         } else {
           attachmentList.innerHTML = '<p class="text-gray-500">暂无附件</p>';
