@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* 基础样式 */
+    /* 保持原有样式不变 */
     body {
       background-color: #f5f7fa;
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -107,6 +107,10 @@
     .reject {
       background: #e74c3c;
     }
+    .error-text {
+      color: #e74c3c;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -150,7 +154,7 @@
       fetchSubmissionDetail();
     });
 
-    // 拉取投稿详情（兼容网页端和小程序端图片路径）
+    // 拉取投稿详情（优化图片和附件处理）
     async function fetchSubmissionDetail() {
       try {
         const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
@@ -177,19 +181,24 @@
         document.getElementById('detailMeta').textContent = 
           `作者：${submission.author || '匿名'} | 投稿时间：${new Date(submission.created_at).toLocaleString()}`;
 
-        // 填充封面图（兼容路径）
+        // 填充封面图（优化路径处理）
         const imageContainer = document.getElementById('detailImage');
         if (submission.images && submission.images.length > 0) {
           let imageUrl = submission.images[0];
-          // 判断是否为小程序端图片（路径含 MINI_PROGRAM_IMAGE_FOLDER）
-          if (imageUrl.includes(MINI_PROGRAM_IMAGE_FOLDER)) {
-            // 小程序端已存储完整 URL，直接使用
-            imageContainer.innerHTML = `<img src="${imageUrl}" alt="投稿封面图">`;
-          } else {
-            // 网页端需拼接存储桶路径
-            imageUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${imageUrl}`;
-            imageContainer.innerHTML = `<img src="${imageUrl}" alt="投稿封面图">`;
+          // 确保 URL 格式正确（处理可能的重复路径）
+          if (!imageUrl.startsWith('http')) {
+            // 处理网页端图片路径
+            const basePath = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/`;
+            // 避免路径重复拼接
+            imageUrl = imageUrl.startsWith(STORAGE_BUCKET) 
+              ? `${SUPABASE_URL}/storage/v1/object/public/${imageUrl}`
+              : basePath + imageUrl;
           }
+          // 显示图片并添加错误处理
+          imageContainer.innerHTML = `
+            <img src="${imageUrl}" alt="投稿封面图" 
+                 onError="this.src=''; document.getElementById('detailImage').innerHTML='<p class=error-text>图片加载失败，点击查看原始链接：<a href=${imageUrl} target=_blank>${imageUrl}</a></p>'">
+          `;
         } else {
           imageContainer.innerHTML = '<p class="text-gray-500">无封面图</p>';
         }
@@ -197,10 +206,20 @@
         // 填充内容
         document.getElementById('detailContent').textContent = submission.content || '无内容';
 
-        // 填充附件
+        // 填充附件（优化下载链接）
         const attachmentList = document.getElementById('attachmentList');
         if (submission.file_url) {
-          const filename = submission.file_url.split('/').pop();
+          let attachUrl = submission.file_url;
+          const filename = attachUrl.split('/').pop();
+          
+          // 确保附件 URL 格式正确
+          if (!attachUrl.startsWith('http')) {
+            const basePath = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/`;
+            attachUrl = attachUrl.startsWith(STORAGE_BUCKET)
+              ? `${SUPABASE_URL}/storage/v1/object/public/${attachUrl}`
+              : basePath + attachUrl;
+          }
+
           attachmentList.innerHTML = `
             <div class="attachment-item">
               <div class="attachment-icon">
@@ -208,17 +227,28 @@
               </div>
               <div class="attachment-info">
                 <div class="attachment-name">${filename}</div>
-                <div class="attachment-size">大小：${formatSize(0)}</div> <!-- 暂不获取大小 -->
+                <div class="attachment-size">大小：${formatSize(0)}</div>
               </div>
-              <button class="download-btn" data-url="${submission.file_url}">
+              <button class="download-btn" data-url="${attachUrl}">
                 下载
               </button>
             </div>
           `;
 
-          // 绑定附件下载事件
-          document.querySelector('.download-btn').addEventListener('click', () => {
-            window.open(submission.file_url, '_blank');
+          // 绑定附件下载事件（添加错误处理）
+          document.querySelector('.download-btn').addEventListener('click', async () => {
+            try {
+              // 先验证链接有效性
+              const test = await fetch(attachUrl, { method: 'HEAD' });
+              if (test.ok) {
+                window.open(attachUrl, '_blank');
+              } else {
+                throw new Error('文件链接无效');
+              }
+            } catch (e) {
+              alert('下载失败，尝试直接访问链接：\n' + attachUrl);
+              window.open(attachUrl, '_blank');
+            }
           });
         } else {
           attachmentList.innerHTML = '<p class="text-gray-500">暂无附件</p>';
@@ -230,7 +260,7 @@
       }
     }
 
-    // 格式化文件大小（简化版）
+    // 格式化文件大小
     function formatSize(bytes) {
       return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(2)} KB`;
     }
