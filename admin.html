@@ -6,38 +6,44 @@
   <title>谷风文学管理后台</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="bg-gray-50">
-  <header class="bg-white shadow-sm py-4">
-    <div class="container mx-auto px-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold">谷风文学管理后台</h1>
-      <button id="logoutBtn" class="text-primary hover:text-primary/80">退出登录</button>
+  <header>
+    <div class="container header-inner">
+      <h1 class="header-title">谷风文学管理后台</h1>
+      <button id="logoutBtn" class="logout-btn">退出登录</button>
     </div>
   </header>
-  <main class="container mx-auto px-4 py-8">
-    <h2 class="text-2xl font-bold mb-6">投稿管理</h2>
-    <div id="loading" class="hidden text-center py-8">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto"></div>
-      <p class="mt-2 text-gray-600">加载中...</p>
+  <main class="main container">
+    <h2 class="page-title">投稿管理</h2>
+    <!-- 加载状态 -->
+    <div id="loading" class="loading hidden">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">加载中...</p>
     </div>
-    <div id="submissionList" class="space-y-4"></div>
-    <div id="detailModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-      <div class="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-auto">
-        <div class="flex justify-between items-center mb-4">
-          <h3 id="modalTitle" class="text-xl font-bold"></h3>
-          <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+    <!-- 投稿列表 -->
+    <div id="submissionList" class="submission-list"></div>
+    <!-- 详情模态框 -->
+    <div id="detailModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 id="modalTitle" class="modal-title"></h3>
+          <button id="closeModal" class="close-btn">
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <p id="modalAuthor" class="text-sm text-gray-500 mb-2"></p>
-        <p id="modalTime" class="text-sm text-gray-500 mb-4"></p>
-        <div id="modalImage" class="mb-4"></div>
-        <div id="modalContent" class="prose max-w-none"></div>
-        <div class="mt-6 flex justify-end space-x-3">
-          <button id="approveBtn" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+        <div class="modal-body">
+          <p id="modalAuthor" class="modal-meta"></p>
+          <p id="modalTime" class="modal-meta"></p>
+          <div id="modalImage" class="modal-image"></div>
+          <div id="modalContent" class="modal-content"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="approveBtn" class="action-btn approve-btn">
             审核通过
           </button>
-          <button id="rejectBtn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+          <button id="rejectBtn" class="action-btn reject-btn">
             审核拒绝
           </button>
         </div>
