@@ -49,6 +49,52 @@
     </div>
   </main>
   <script>
+    // 时间格式化函数 - 修复时间显示问题
+    function formatDate(createdAt) {
+      if (!createdAt) return '未知时间';
+      const date = new Date(createdAt);
+      // 处理数据库返回的created_at字段
+      return date.toString() === 'Invalid Date' 
+        ? '时间格式错误' 
+        : date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+    }
+
+    // 状态中文映射函数
+    function mapStatusToChinese(status) {
+      const statusMap = {
+        'pending': '待审核',
+        'approved': '已通过',
+        'rejected': '已拒绝',
+        // 兼容可能的其他状态
+        '待审核': '待审核',
+        '已通过': '已通过',
+        '已拒绝': '已拒绝'
+      };
+      return statusMap[status] || '未知状态';
+    }
+
+    // 获取状态对应的样式类
+    function getStatusClass(status) {
+      const normalizedStatus = mapStatusToChinese(status);
+      switch(normalizedStatus) {
+        case '待审核':
+          return 'bg-yellow-100 text-yellow-800';
+        case '已通过':
+          return 'bg-green-100 text-green-800';
+        case '已拒绝':
+          return 'bg-red-100 text-red-800';
+        default:
+          return 'bg-gray-100 text-gray-800';
+      }
+    }
+
     // 渲染投稿列表
     async function fetchSubmissions() {
       const loadingEl = document.getElementById('loading');
@@ -66,106 +112,136 @@
           return;
         }
 
+        // 生成列表HTML
         listEl.innerHTML = submissions.map(sub => `
           <div class="border rounded-lg p-4 hover:shadow-md transition-shadow" data-id="${sub.id}">
             <div class="flex justify-between items-start">
               <h3 class="font-bold text-lg">${sub.title}</h3>
-              <span class="px-2 py-1 rounded-full text-xs ${sub.status === '待审核' ? 'bg-yellow-100 text-yellow-800' : sub.status === '已通过' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                ${sub.status}
+              <span class="px-2 py-1 rounded-full text-xs ${getStatusClass(sub.status)}">
+                ${mapStatusToChinese(sub.status)}
               </span>
             </div>
-            <p class="text-sm text-gray-500 mt-1">作者：${sub.author} | 时间：${function formatDate(createdAt) 
-  if (!createdAt) return '未知时间';
-  const date = new Date(createdAt);
-  return date.toString() === 'Invalid Date' 
-    ? '时间格式错误' 
-    : date.toLocaleString();
-}</p>
-            <button class="mt-2 text-primary view-detail">查看详情</button>
+            <p class="text-sm text-gray-500 mt-1">
+              作者：${sub.author || '匿名'} | 
+              时间：${formatDate(sub.created_at)}
+            </p>
+            <button class="mt-2 text-primary view-detail" data-id="${sub.id}">查看详情</button>
           </div>
         `).join('');
 
-        // 为“查看详情”按钮绑定事件
-        document.querySelectorAll('.view-detail').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const subId = btn.closest('[data-id]').dataset.id;
-            showSubmissionDetail(subId, submissions);
-          });
-        });
       } catch (error) {
         listEl.innerHTML = `<p class="text-red-500">加载失败：${error.message}</p>`;
+        console.error('加载投稿列表失败:', error);
       } finally {
         loadingEl.classList.add('hidden');
       }
     }
 
     // 显示投稿详情
-    function showSubmissionDetail(id, allSubmissions) {
-      const submission = allSubmissions.find(sub => sub.id === id);
-      if (!submission) return;
+    async function showSubmissionDetail(id) {
+      try {
+        // 获取最新的投稿数据
+        const response = await fetch('/admin/submissions');
+        const allSubmissions = await response.json();
+        const submission = allSubmissions.find(sub => sub.id === id);
+        
+        if (!submission) {
+          alert('未找到该投稿数据');
+          return;
+        }
 
-      const modal = document.getElementById('detailModal');
-      const modalTitle = document.getElementById('modalTitle');
-      const modalAuthor = document.getElementById('modalAuthor');
-      const modalTime = document.getElementById('modalTime');
-      const modalImage = document.getElementById('modalImage');
-      const modalContent = document.getElementById('modalContent');
+        const modal = document.getElementById('detailModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalAuthor = document.getElementById('modalAuthor');
+        const modalTime = document.getElementById('modalTime');
+        const modalImage = document.getElementById('modalImage');
+        const modalContent = document.getElementById('modalContent');
 
-      modalTitle.textContent = submission.title;
-      modalAuthor.textContent = `作者：${submission.author}`;
-      modalTime.textContent = `时间：${formatDate(sub.created_at)}`;
-      modalContent.textContent = submission.content;
+        // 填充模态框数据
+        modalTitle.textContent = submission.title || '无标题';
+        modalAuthor.textContent = `作者：${submission.author || '匿名'}`;
+        modalTime.textContent = `投稿时间：${formatDate(submission.created_at)}`;
+        modalContent.textContent = submission.content || '无内容';
 
-      // 处理封面图
-      if (submission.image) {
-        modalImage.innerHTML = `<img src="data:${submission.image.type};base64,${submission.image.base64}" alt="封面图" class="max-w-full h-auto rounded">`;
-      } else {
-        modalImage.innerHTML = '<p class="text-gray-500">无封面图</p>';
+        // 处理封面图
+        if (submission.image && submission.image.base64 && submission.image.type) {
+          modalImage.innerHTML = `<img src="data:${submission.image.type};base64,${submission.image.base64}" alt="投稿封面图" class="max-w-full h-auto rounded">`;
+        } else {
+          modalImage.innerHTML = '<p class="text-gray-500">无封面图</p>';
+        }
+
+        // 显示模态框
+        modal.classList.remove('hidden');
+
+        // 关闭模态框事件（使用once确保不会重复绑定）
+        document.getElementById('closeModal').onclick = () => {
+          modal.classList.add('hidden');
+        };
+
+        // 审核通过事件
+        document.getElementById('approveBtn').onclick = async () => {
+          await updateSubmissionStatus(id, 'approved');
+          modal.classList.add('hidden');
+          fetchSubmissions(); // 刷新列表
+        };
+
+        // 审核拒绝事件
+        document.getElementById('rejectBtn').onclick = async () => {
+          await updateSubmissionStatus(id, 'rejected');
+          modal.classList.add('hidden');
+          fetchSubmissions(); // 刷新列表
+        };
+
+      } catch (error) {
+        alert('获取详情失败');
+        console.error('显示详情失败:', error);
       }
-
-      modal.classList.remove('hidden');
-
-      // 关闭模态框
-      document.getElementById('closeModal').addEventListener('click', () => {
-        modal.classList.add('hidden');
-      });
-
-      // 审核通过
-      document.getElementById('approveBtn').addEventListener('click', async () => {
-        await updateSubmissionStatus(id, '已通过');
-        modal.classList.add('hidden');
-        fetchSubmissions(); // 刷新列表
-      });
-
-      // 审核拒绝
-      document.getElementById('rejectBtn').addEventListener('click', async () => {
-        await updateSubmissionStatus(id, '已拒绝');
-        modal.classList.add('hidden');
-        fetchSubmissions(); // 刷新列表
-      });
     }
 
     // 更新投稿状态
     async function updateSubmissionStatus(id, status) {
       try {
-        await fetch('/admin/update-status', {
+        const response = await fetch('/admin/update-status', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status })
+          headers: { 
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify({ 
+            id, 
+            status 
+          })
         });
+
+        if (!response.ok) {
+          throw new Error('更新状态失败');
+        }
+        
+        alert(status === 'approved' ? '审核通过成功' : '审核拒绝成功');
       } catch (error) {
-        alert('更新状态失败');
-        console.error(error);
+        alert('更新状态失败: ' + error.message);
+        console.error('更新状态错误:', error);
       }
     }
 
-    // 页面加载时渲染列表
-    document.addEventListener('DOMContentLoaded', fetchSubmissions);
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 加载投稿列表
+      fetchSubmissions();
 
-    // 退出登录
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      window.location.href = 'index.html';
+      // 点击查看详情事件（使用事件委托处理动态元素）
+      document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('view-detail')) {
+          const subId = e.target.dataset.id;
+          showSubmissionDetail(subId);
+        }
+      });
+
+      // 退出登录
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        window.location.href = 'index.html';
+      });
     });
   </script>
 </body>
 </html>
+    
