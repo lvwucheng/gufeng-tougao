@@ -6,46 +6,341 @@
   <title>谷风文学管理后台</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/admin.css">
+  <style>
+    /* 全局重置与基础样式 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    body {
+      background-color: #f5f7fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* 头部样式 */
+    header {
+      background-color: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 0;
+    }
+
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    #logoutBtn {
+      background: none;
+      border: none;
+      color: #3498db;
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    #logoutBtn:hover {
+      color: #2980b9;
+    }
+
+    /* 主内容区样式 */
+    main {
+      padding: 30px 0;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #2c3e50;
+    }
+
+    /* 加载状态样式 */
+    #loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 200px;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(52, 152, 219, 0.3);
+      border-radius: 50%;
+      border-top-color: #3498db;
+      animation: spin 1s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      color: #7f8c8d;
+      font-size: 14px;
+    }
+
+    /* 投稿列表样式 */
+    #submissionList {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .submission-card {
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      padding: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .submission-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+      line-height: 1.4;
+    }
+
+    .card-status {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    .status-pending {
+      background-color: #f39c12;
+    }
+
+    .status-approved {
+      background-color: #2ecc71;
+    }
+
+    .status-rejected {
+      background-color: #e74c3c;
+    }
+
+    .card-meta {
+      font-size: 13px;
+      color: #7f8c8d;
+      margin-bottom: 16px;
+    }
+
+    /* 查看详情按钮（保留view-detail类，确保事件触发） */
+    .view-detail {
+      background: none;
+      border: none;
+      color: #3498db;
+      font-size: 14px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .view-detail:hover {
+      color: #2980b9;
+      text-decoration: underline;
+    }
+
+    /* 模态框样式 */
+    #detailModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+    }
+
+    #detailModal.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background-color: #fff;
+      border-radius: 8px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      transform: translateY(20px);
+      transition: transform 0.3s;
+    }
+
+    #detailModal.active .modal-content {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+    }
+
+    #modalTitle {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    #closeModal {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: #7f8c8d;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    #closeModal:hover {
+      color: #333;
+    }
+
+    .modal-body {
+      padding: 20px;
+    }
+
+    #modalAuthor,
+    #modalTime {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: 8px;
+    }
+
+    #modalImage {
+      margin: 16px 0;
+    }
+
+    #modalImage img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+
+    #modalContent {
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      white-space: pre-line;
+      margin-bottom: 20px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 16px 20px;
+      border-top: 1px solid #eee;
+    }
+
+    #approveBtn,
+    #rejectBtn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    #approveBtn {
+      background-color: #2ecc71;
+    }
+
+    #approveBtn:hover {
+      background-color: #27ae60;
+    }
+
+    #rejectBtn {
+      background-color: #e74c3c;
+    }
+
+    #rejectBtn:hover {
+      background-color: #c0392b;
+    }
+  </style>
 </head>
-<body class="bg-gray-50">
+<body>
   <header>
     <div class="container header-inner">
       <h1 class="header-title">谷风文学管理后台</h1>
-      <button id="logoutBtn" class="logout-btn">退出登录</button>
+      <button id="logoutBtn">退出登录</button>
     </div>
   </header>
-  <main class="main container">
+  <main class="container">
     <h2 class="page-title">投稿管理</h2>
     <!-- 加载状态 -->
-    <div id="loading" class="loading hidden">
+    <div id="loading" class="hidden">
       <div class="loading-spinner"></div>
       <p class="loading-text">加载中...</p>
     </div>
     <!-- 投稿列表 -->
-    <div id="submissionList" class="submission-list"></div>
+    <div id="submissionList"></div>
     <!-- 详情模态框 -->
-    <div id="detailModal" class="modal-overlay">
-      <div class="modal">
+    <div id="detailModal">
+      <div class="modal-content">
         <div class="modal-header">
-          <h3 id="modalTitle" class="modal-title"></h3>
-          <button id="closeModal" class="close-btn">
+          <h3 id="modalTitle"></h3>
+          <button id="closeModal">
             <i class="fas fa-times"></i>
           </button>
         </div>
         <div class="modal-body">
-          <p id="modalAuthor" class="modal-meta"></p>
-          <p id="modalTime" class="modal-meta"></p>
-          <div id="modalImage" class="modal-image"></div>
-          <div id="modalContent" class="modal-content"></div>
+          <p id="modalAuthor"></p>
+          <p id="modalTime"></p>
+          <div id="modalImage"></div>
+          <div id="modalContent"></div>
         </div>
         <div class="modal-footer">
-          <button id="approveBtn" class="action-btn approve-btn">
-            审核通过
-          </button>
-          <button id="rejectBtn" class="action-btn reject-btn">
-            审核拒绝
-          </button>
+          <button id="approveBtn">审核通过</button>
+          <button id="rejectBtn">审核拒绝</button>
         </div>
       </div>
     </div>
@@ -85,13 +380,13 @@
       const normalizedStatus = mapStatusToChinese(status);
       switch(normalizedStatus) {
         case '待审核':
-          return 'bg-yellow-100 text-yellow-800';
+          return 'status-pending';
         case '已通过':
-          return 'bg-green-100 text-green-800';
+          return 'status-approved';
         case '已拒绝':
-          return 'bg-red-100 text-red-800';
+          return 'status-rejected';
         default:
-          return 'bg-gray-100 text-gray-800';
+          return '';
       }
     }
 
@@ -113,18 +408,18 @@
         }
 
         listEl.innerHTML = submissions.map(sub => `
-          <div class="border rounded-lg p-4 hover:shadow-md transition-shadow" data-id="${sub.id}">
-            <div class="flex justify-between items-start">
-              <h3 class="font-bold text-lg">${sub.title}</h3>
-              <span class="px-2 py-1 rounded-full text-xs ${getStatusClass(sub.status)}">
+          <div class="submission-card" data-id="${sub.id}">
+            <div class="card-header">
+              <h3 class="card-title">${sub.title}</h3>
+              <span class="card-status ${getStatusClass(sub.status)}">
                 ${mapStatusToChinese(sub.status)}
               </span>
             </div>
-            <p class="text-sm text-gray-500 mt-1">
+            <p class="card-meta">
               作者：${sub.author || '匿名'} | 
               时间：${formatDate(sub.timestamp)}
             </p>
-            <button class="mt-2 text-primary view-detail" data-id="${sub.id}">查看详情</button>
+            <button class="view-detail" data-id="${sub.id}">查看详情</button>
           </div>
         `).join('');
 
@@ -141,7 +436,6 @@
       try {
         const response = await fetch('/admin/submissions');
         const allSubmissions = await response.json();
-        
         const submission = allSubmissions.find(sub => parseInt(sub.id) === id);
         
         if (!submission) {
@@ -150,38 +444,38 @@
         }
 
         const modal = document.getElementById('detailModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalAuthor = document.getElementById('modalAuthor');
-        const modalTime = document.getElementById('modalTime');
+        document.getElementById('modalTitle').textContent = submission.title || '无标题';
+        document.getElementById('modalAuthor').textContent = `作者：${submission.author || '匿名'}`;
+        document.getElementById('modalTime').textContent = `投稿时间：${formatDate(submission.timestamp)}`;
+        document.getElementById('modalContent').textContent = submission.content || '无内容';
+
+        // 处理封面图
         const modalImage = document.getElementById('modalImage');
-        const modalContent = document.getElementById('modalContent');
-
-        modalTitle.textContent = submission.title || '无标题';
-        modalAuthor.textContent = `作者：${submission.author || '匿名'}`;
-        modalTime.textContent = `投稿时间：${formatDate(submission.timestamp)}`;
-        modalContent.textContent = submission.content || '无内容';
-
         if (submission.image && submission.image.base64 && submission.image.type) {
-          modalImage.innerHTML = `<img src="data:${submission.image.type};base64,${submission.image.base64}" alt="投稿封面图" class="max-w-full h-auto rounded">`;
+          modalImage.innerHTML = `<img src="data:${submission.image.type};base64,${submission.image.base64}" alt="投稿封面图">`;
         } else {
           modalImage.innerHTML = '<p class="text-gray-500">无封面图</p>';
         }
 
-        modal.classList.remove('hidden');
+        // 显示模态框
+        modal.classList.add('active');
 
+        // 关闭模态框
         document.getElementById('closeModal').onclick = () => {
-          modal.classList.add('hidden');
+          modal.classList.remove('active');
         };
 
+        // 审核通过
         document.getElementById('approveBtn').onclick = async () => {
           await updateSubmissionStatus(id, 'approved');
-          modal.classList.add('hidden');
+          modal.classList.remove('active');
           fetchSubmissions();
         };
 
+        // 审核拒绝
         document.getElementById('rejectBtn').onclick = async () => {
           await updateSubmissionStatus(id, 'rejected');
-          modal.classList.add('hidden');
+          modal.classList.remove('active');
           fetchSubmissions();
         };
 
@@ -196,13 +490,8 @@
       try {
         const response = await fetch('/admin/update-status', {
           method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json' 
-          },
-          body: JSON.stringify({ 
-            id, 
-            status 
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status })
         });
 
         if (!response.ok) {
@@ -216,16 +505,20 @@
       }
     }
 
+    // 页面加载完成后初始化
     document.addEventListener('DOMContentLoaded', () => {
+      // 加载投稿列表
       fetchSubmissions();
 
+      // 点击查看详情事件（事件委托，依赖view-detail类）
       document.addEventListener('click', (e) => {
         if (e.target.classList.contains('view-detail')) {
-          const subId = parseInt(e.target.dataset.id); 
-          showSubmissionDetail(subId); 
+          const subId = parseInt(e.target.dataset.id);
+          showSubmissionDetail(subId);
         }
       });
 
+      // 退出登录
       document.getElementById('logoutBtn').addEventListener('click', () => {
         window.location.href = 'index.html';
       });
@@ -233,5 +526,3 @@
   </script>
 </body>
 </html>
-
-    
