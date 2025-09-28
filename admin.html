@@ -123,9 +123,9 @@
             </div>
             <p class="text-sm text-gray-500 mt-1">
               作者：${sub.author || '匿名'} | 
-              时间：${formatDate(sub.created_at)}
+              时间：${formatDate(sub.timestamp)}
             </p>
-            <button class="mt-2 text-primary view-detail" data-id="${sub.id}">查看详情</button>
+            <button class="mt-2 text-primary view-detail" data-id="${String(sub.id) === id}">查看详情</button>
           </div>
         `).join('');
 
