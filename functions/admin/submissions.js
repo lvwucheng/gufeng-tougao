@@ -30,7 +30,7 @@ export async function onRequest(context) {
       author: item.author,
       category: item.category,
       content: item.content,
-      timestamp: item.timestamp,
+      timestamp: item.created_at,
       status: item.status || '待审核',
       image: item.image,
       attachment: item.attachment
