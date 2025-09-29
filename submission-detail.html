@@ -6,9 +6,8 @@
   <title>投稿详情</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    /* 保持原有样式不变 */
+    /* 基础样式 */
     body {
       background-color: #f5f7fa;
       font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -44,12 +43,12 @@
       height: auto;
       border-radius: 4px;
     }
-    /* 关键修改：添加首行缩进和优化行高 */
     .content {
       line-height: 1.8;
       color: #333;
       margin-bottom: 24px;
-      text-indent: 2em; /* 首行缩进 2 字符，适配中文 */
+      white-space: pre-wrap; /* 关键：保留文本中的换行和空格 */
+      text-indent: 2em; /* 首行缩进 2 字符 */
     }
     .attachment {
       margin-top: 24px;
@@ -110,40 +109,9 @@
     .reject {
       background: #e74c3c;
     }
-    .error-text {
-      color: #e74c3c;
-      font-size: 14px;
-    }
   </style>
 </head>
 <body>
-  <!-- 导航栏 -->
-  <header class="sticky top-0 z-50 bg-white shadow-sm transition-all duration-300" id="navbar">
-    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center space-x-2">
-        <i class="fa fa-book text-primary text-2xl"></i>
-        <h1 class="text-xl font-bold text-dark">谷风文学投稿</h1>
-      </div>
-      <nav class="hidden md:flex items-center space-x-8">
-        <a href="#home" class="text-dark hover:text-primary transition-colors font-medium">首页</a>
-        <a href="#guide" class="text-dark hover:text-primary transition-colors font-medium">投稿指南</a>
-        <a href="#submit" class="text-dark hover:text-primary transition-colors font-medium">我要投稿</a>
-        <a href="#admin" class="text-dark hover:text-primary transition-colors font-medium">管理登录</a>
-      </nav>
-      <button class="md:hidden text-dark text-xl" id="menuToggle">
-        <i class="fa fa-bars"></i>
-      </button>
-    </div>
-    <!-- 移动端菜单 -->
-    <div class="md:hidden h-0 overflow-hidden transition-height bg-white" id="mobileMenu">
-      <div class="px-4 py-2 space-y-3">
-        <a href="#home" class="block py-2 text-dark hover:text-primary transition-colors">首页</a>
-        <a href="#guide" class="block py-2 text-dark hover:text-primary transition-colors">投稿指南</a>
-        <a href="#submit" class="block py-2 text-dark hover:text-primary transition-colors">我要投稿</a>
-        <a href="#admin" class="block py-2 text-dark hover:text-primary transition-colors">管理登录</a>
-      </div>
-    </div>
-  </header>
   <div class="container">
     <div class="header">
       <h1 class="title" id="detailTitle">加载中...</h1>
@@ -164,172 +132,151 @@
   </div>
 
   <script>
-    // Supabase 配置
-    const SUPABASE_URL = 'https://ojfmwalxryldzcujehav.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZm13YWx4cnlsZHpjdWplaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MjUwMzMsImV4cCI6MjA3MDMwMTAzM30.5LNX9PpYnqb5dVR5OKas7qr7zjd10IRSBZop4cuNryM';
-    const STORAGE_BUCKET = 'submission-files';
+  // Supabase 配置
+  const SUPABASE_URL = 'https://ojfmwalxryldzcujehav.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZm13YWx4cnlsZHpjdWplaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MjUwMzMsImV4cCI6MjA3MDMwMTAzM30.5LNX9PpYnqb5dVR5OKas7qr7zjd10IRSBZop4cuNryM';
+  const STORAGE_BUCKET = 'submission-files';
 
-    // 初始化 Supabase 客户端
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  // 获取 URL 中的投稿 ID
+  const urlParams = new URLSearchParams(window.location.search);
+  const submissionId = urlParams.get('id');
 
-    // 获取 URL 中的投稿 ID
-    const urlParams = new URLSearchParams(window.location.search);
-    const submissionId = urlParams.get('id');
+  if (!submissionId) {
+    alert('缺少投稿 ID，无法查看详情');
+    window.location.href = 'admin.html';
+  }
 
-    if (!submissionId) {
-      alert('缺少投稿 ID，无法查看详情');
-      window.location.href = 'admin.html';
-    }
+  // 页面加载后拉取详情
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchSubmissionDetail();
+  });
 
-    // 页面加载后拉取详情
-    document.addEventListener('DOMContentLoaded', () => {
-      fetchSubmissionDetail();
-    });
-
-    // 拉取投稿详情（修复后：保留真实接口请求，添加换行处理）
-    async function fetchSubmissionDetail() {
-      try {
-        // 1. 真实请求数据库数据（原逻辑保留）
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`接口响应错误：${response.status}`);
+  // 拉取投稿详情（匹配数据库字段）
+  async function fetchSubmissionDetail() {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
         }
+      });
 
-        const submissions = await response.json();
-        if (submissions.length === 0) {
-          throw new Error('未找到该投稿数据');
-        }
+      if (!response.ok) {
+        throw new Error(`接口响应错误：${response.status}`);
+      }
 
-        const submission = submissions[0];
+      const submissions = await response.json();
+      if (submissions.length === 0) {
+        throw new Error('未找到该投稿数据');
+      }
 
-        // 2. 填充标题和元信息（原逻辑保留）
-        document.getElementById('detailTitle').textContent = submission.title || '无标题';
-        document.getElementById('detailMeta').textContent = 
-          `作者：${submission.author || '匿名'} | 投稿时间：${new Date(submission.created_at).toLocaleString()}`;
+      const submission = submissions[0];
 
-        // 3. 填充封面图（原逻辑保留）
-        const imageContainer = document.getElementById('detailImage');
-        if (submission.images && submission.images.length > 0) {
-          const imagePath = submission.images[0];
-          const { data: signedImage, error: imageError } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .createSignedUrl(imagePath, 60);
+      // 填充标题和元信息
+      document.getElementById('detailTitle').textContent = submission.title || '无标题';
+      document.getElementById('detailMeta').textContent = 
+        `作者：${submission.author || '匿名'} | 投稿时间：${new Date(submission.created_at).toLocaleString()}`;
 
-          if (imageError) throw imageError;
+      // 填充封面图（从 images 数组取第一个元素）
+      const imageContainer = document.getElementById('detailImage');
+      if (submission.images && submission.images.length > 0) {
+        // 数据库中 images 已存储完整 URL，直接使用
+        imageContainer.innerHTML = `<img src="${submission.images[0]}" alt="投稿封面图" style="max-width: 100%;">`;
+      } else {
+        imageContainer.innerHTML = '<p class="text-gray-500">无封面图</p>';
+      }
 
-          imageContainer.innerHTML = `
-            <img src="${signedImage.signedUrl}" alt="投稿封面图" 
-                 onError="this.src=''; this.closest('.image-container').innerHTML='<p class=error-text>图片加载失败，路径：${imagePath}</p>'">
-          `;
-        } else {
-          imageContainer.innerHTML = '<p class="text-gray-500">无封面图</p>';
-        }
+      // 填充内容（关键修改：保留换行）
+      const detailContent = document.getElementById('detailContent');
+      // 使用 textContent 但通过 CSS white-space: pre-wrap 保留换行
+      detailContent.textContent = submission.content || '无内容';
 
-        // 4. 关键修改：处理内容换行 + 渲染（替换原 textContent 逻辑）
-          // 临时注释换行处理，用原始 textContent 渲染
-    const detailContent = document.getElementById('detailContent');
-    // 注释掉这行：detailContent.innerHTML = submission.content.replace(/\n/g, '<br>');
-    detailContent.textContent = submission.content || '无内容';
-        }
-
-        // 5. 填充附件（原逻辑保留）
-        const attachmentList = document.getElementById('attachmentList');
-        if (submission.file_url) {
-          const attachPath = submission.file_url;
-          const { data: signedAttach, error: attachError } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .createSignedUrl(attachPath, 60);
-
-          if (attachError) throw attachError;
-
-          const filename = attachPath.split('/').pop();
-          attachmentList.innerHTML = `
-            <div class="attachment-item">
-              <div class="attachment-icon">
-                <i class="fas fa-file"></i>
-              </div>
-              <div class="attachment-info">
-                <div class="attachment-name">${filename}</div>
-                <div class="attachment-size">大小：${formatSize(0)}</div>
-              </div>
-              <button class="download-btn" data-url="${signedAttach.signedUrl}">
-                下载
-              </button>
+      // 填充附件（读取 file_url 字段）
+      const attachmentList = document.getElementById('attachmentList');
+      if (submission.file_url) {
+        const filename = submission.file_url.split('/').pop();
+        attachmentList.innerHTML = `
+          <div class="attachment-item">
+            <div class="attachment-icon">
+              <i class="fas fa-file"></i>
             </div>
-          `;
+            <div class="attachment-info">
+              <div class="attachment-name">${filename}</div>
+              <div class="attachment-size">大小：${formatSize(0)}</div> <!-- 暂不获取大小 -->
+            </div>
+            <button class="download-btn" data-url="${submission.file_url}">
+              下载
+            </button>
+          </div>
+        `;
 
-          document.querySelector('.download-btn').addEventListener('click', () => {
-            window.open(signedAttach.signedUrl, '_blank');
-          });
-        } else {
-          attachmentList.innerHTML = '<p class="text-gray-500">暂无附件</p>';
-        }
-
-      } catch (error) {
-        console.error('加载详情失败:', error);
-        alert('加载详情失败，请重试\n错误原因：' + error.message);
-      }
-    }
-
-    // 格式化文件大小（原逻辑保留）
-    function formatSize(bytes) {
-      return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(2)} KB`;
-    }
-
-    // 审核通过（原逻辑保留）
-    document.getElementById('approveBtn').addEventListener('click', async () => {
-      try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'approved' })
+        // 绑定附件下载事件
+        document.querySelector('.download-btn').addEventListener('click', () => {
+          window.open(submission.file_url, '_blank');
         });
-
-        if (response.ok) {
-          alert('审核通过成功');
-          window.location.href = 'admin.html';
-        } else {
-          throw new Error('更新状态失败');
-        }
-      } catch (error) {
-        alert('审核操作失败: ' + error.message);
+      } else {
+        attachmentList.innerHTML = '<p class="text-gray-500">暂无附件</p>';
       }
-    });
 
-    // 审核拒绝（原逻辑保留）
-    document.getElementById('rejectBtn').addEventListener('click', async () => {
-      try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'rejected' })
-        });
+    } catch (error) {
+      console.error('加载详情失败:', error);
+      alert('加载详情失败，请重试\n错误原因：' + error.message);
+    }
+  }
 
-        if (response.ok) {
-          alert('审核拒绝成功');
-          window.location.href = 'admin.html';
-        } else {
-          throw new Error('更新状态失败');
-        }
-      } catch (error) {
-        alert('审核操作失败: ' + error.message);
+  // 格式化文件大小（简化版）
+  function formatSize(bytes) {
+    return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(2)} KB`;
+  }
+
+  // 审核通过/拒绝
+  document.getElementById('approveBtn').addEventListener('click', async () => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'approved' })
+      });
+
+      if (response.ok) {
+        alert('审核通过成功');
+        window.location.href = 'admin.html';
+      } else {
+        throw new Error('更新状态失败');
       }
-    });
-  </script>
+    } catch (error) {
+      alert('审核操作失败: ' + error.message);
+    }
+  });
+
+  document.getElementById('rejectBtn').addEventListener('click', async () => {
+    try {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/submissions?id=eq.${submissionId}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: 'rejected' })
+      });
+
+      if (response.ok) {
+        alert('审核拒绝成功');
+        window.location.href = 'admin.html';
+      } else {
+        throw new Error('更新状态失败');
+      }
+    } catch (error) {
+      alert('审核操作失败: ' + error.message);
+    }
+  });
+</script>
+
 </body>
 </html>
