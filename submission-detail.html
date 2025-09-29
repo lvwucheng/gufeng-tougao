@@ -43,11 +43,19 @@
       height: auto;
       border-radius: 4px;
     }
-    #detailImage img {
-  max-width: 100%;
-  height: auto;
+   #detailImages {
+  display: flex;
+  flex-wrap: wrap;   /* 自动换行，避免溢出 */
+  gap: 16px;         /* 图片之间的间距 */
+  margin: 16px 0;    /* 与上下内容的间距 */
+}
+
+/* 每张图片：限制尺寸 + 美化 */
+#detailImages img {
+  max-width: 300px;  /* 单张图片最大宽度，可根据设计调整 */
+  height: auto;      /* 保持宽高比 */
   border-radius: 4px;
-  margin-bottom: 16px; /* 图片之间留间距 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
     .content {
