@@ -233,13 +233,10 @@
         }
 
         // 4. 关键修改：处理内容换行 + 渲染（替换原 textContent 逻辑）
-        const detailContent = document.getElementById('detailContent');
-        if (submission.content) {
-          // 将纯文本中的换行符 \n 替换为 <br>，实现分段
-          const formattedContent = submission.content.replace(/\n/g, '<br>');
-          detailContent.innerHTML = formattedContent;
-        } else {
-          detailContent.textContent = '无内容';
+          // 临时注释换行处理，用原始 textContent 渲染
+    const detailContent = document.getElementById('detailContent');
+    // 注释掉这行：detailContent.innerHTML = submission.content.replace(/\n/g, '<br>');
+    detailContent.textContent = submission.content || '无内容';
         }
 
         // 5. 填充附件（原逻辑保留）
