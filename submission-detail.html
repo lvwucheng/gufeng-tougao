@@ -127,6 +127,33 @@
   </style>
 </head>
 <body>
+  <!-- 导航栏 -->
+  <header class="sticky top-0 z-50 bg-white shadow-sm transition-all duration-300" id="navbar">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-book text-primary text-2xl"></i>
+        <h1 class="text-xl font-bold text-dark">谷风文学投稿</h1>
+      </div>
+      <nav class="hidden md:flex items-center space-x-8">
+        <a href="#home" class="text-dark hover:text-primary transition-colors font-medium">首页</a>
+        <a href="#guide" class="text-dark hover:text-primary transition-colors font-medium">投稿指南</a>
+        <a href="#submit" class="text-dark hover:text-primary transition-colors font-medium">我要投稿</a>
+        <a href="#admin" class="text-dark hover:text-primary transition-colors font-medium">管理登录</a>
+      </nav>
+      <button class="md:hidden text-dark text-xl" id="menuToggle">
+        <i class="fa fa-bars"></i>
+      </button>
+    </div>
+    <!-- 移动端菜单 -->
+    <div class="md:hidden h-0 overflow-hidden transition-height bg-white" id="mobileMenu">
+      <div class="px-4 py-2 space-y-3">
+        <a href="#home" class="block py-2 text-dark hover:text-primary transition-colors">首页</a>
+        <a href="#guide" class="block py-2 text-dark hover:text-primary transition-colors">投稿指南</a>
+        <a href="#submit" class="block py-2 text-dark hover:text-primary transition-colors">我要投稿</a>
+        <a href="#admin" class="block py-2 text-dark hover:text-primary transition-colors">管理登录</a>
+      </div>
+    </div>
+  </header>
   <div class="container">
     <div class="header">
       <h1 class="title" id="detailTitle">加载中...</h1>
