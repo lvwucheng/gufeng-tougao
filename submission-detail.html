@@ -43,6 +43,13 @@
       height: auto;
       border-radius: 4px;
     }
+    #detailImage img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 16px; /* 图片之间留间距 */
+}
+
     .content {
       line-height: 1.8;
       color: #333;
@@ -179,13 +186,12 @@
         `作者：${submission.author || '匿名'} | 投稿时间：${new Date(submission.created_at).toLocaleString()}`;
 
       // 填充封面图（从 images 数组取第一个元素）
-      const imageContainer = document.getElementById('detailImage');
-      if (submission.images && submission.images.length > 0) {
-        // 数据库中 images 已存储完整 URL，直接使用
-        imageContainer.innerHTML = `<img src="${submission.images[0]}" alt="投稿封面图" style="max-width: 100%;">`;
-      } else {
-        imageContainer.innerHTML = '<p class="text-gray-500">无封面图</p>';
-      }
+     const imageContainer = document.getElementById('detailImage');
+if (submission.images && submission.images.length > 0) {
+  imageContainer.innerHTML = `<img src="${submission.images[0]}" alt="相关图片" style="max-width: 100%;">`;
+} else {
+  imageContainer.innerHTML = '<p class="text-gray-500">无有图片</p>';
+}
 
       // 填充内容（关键修改：保留换行）
       const detailContent = document.getElementById('detailContent');
