@@ -193,12 +193,23 @@
       document.getElementById('detailMeta').textContent = 
         `作者：${submission.author || '匿名'} | 投稿时间：${new Date(submission.created_at).toLocaleString()}`;
 
-      // 填充封面图（从 images 数组取第一个元素）
-     const imageContainer = document.getElementById('detailImage');
+     // 1. 获取图片容器
+const imageContainer = document.getElementById('detailImages');
+// 2. 清空原有内容（避免重复渲染）
+imageContainer.innerHTML = '';
+
+// 3. 遍历所有图片 URL，生成 img 标签
 if (submission.images && submission.images.length > 0) {
-  imageContainer.innerHTML = `<img src="${submission.images[0]}" alt="相关图片" style="max-width: 100%;">`;
+  submission.images.forEach(url => {
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = '投稿图片';
+    img.className = 'mb-4 rounded-lg shadow'; // 增加样式类（可选）
+    img.style.maxWidth = '100%'; // 限制图片最大宽度，避免溢出
+    imageContainer.appendChild(img);
+  });
 } else {
-  imageContainer.innerHTML = '<p class="text-gray-500">无有图片</p>';
+  imageContainer.innerHTML = '<p class="text-gray-500">无图片</p>';
 }
 
       // 填充内容（关键修改：保留换行）
