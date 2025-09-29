@@ -6,7 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 管理员登录表单相关元素
     const adminForm = document.getElementById('adminLoginForm');
-    
+
+    // 新增：多图上传相关变量
+    const imageInput = document.getElementById('images'); // 多图选择器
+    const previewContainer = document.getElementById('imagePreviews'); // 预览容器
+    let selectedImageFiles = []; // 存储已选图片文件
+
+
     // 工具函数：生成唯一文件名（避免文件重名）
     function getUniqueFileName(originalName) {
         if (!originalName) return '';
@@ -55,7 +61,50 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 投稿表单提交逻辑（原有功能保持不变）
+    // 新增：多图选择与预览逻辑
+    if (imageInput && previewContainer) {
+        imageInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            // 限制最多5张
+            if (selectedImageFiles.length + files.length > 5) {
+                alert('最多只能选择5张图片');
+                imageInput.value = ''; // 重置选择
+                return;
+            }
+
+            for (const file of files) {
+                // 单张图片大小限制（5MB）
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`图片 ${file.name} 超过5MB，请压缩后上传`);
+                    continue;
+                }
+                // 验证图片格式
+                if (!file.type.startsWith('image/') || 
+                    !['image/jpeg', 'image/png', 'image/gif', 'image/webp'].includes(file.type)) {
+                    alert(`图片 ${file.name} 格式不支持，仅允许jpg、png、gif、webp`);
+                    continue;
+                }
+
+                // 添加到已选列表
+                selectedImageFiles.push(file);
+
+                // 生成预览图
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = document.createElement('img');
+                    img.src = event.target.result;
+                    img.className = 'w-20 h-20 object-cover rounded border border-gray-200'; // 预览图样式
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // 清空输入框（允许重复选择同一张图）
+            imageInput.value = '';
+        });
+    }
+
+    // 投稿表单提交逻辑（整合多图上传）
     if (form) {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -66,30 +115,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 category: document.getElementById('category').value,
                 author: document.getElementById('author').value || '匿名',
                 content: document.getElementById('content').value,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                images: [] // 新增：存储多图的Base64数据（数组）
             };
 
-            // 获取上传的文件并转为 Base64
-            const imageFile = document.getElementById('image').files[0];
+            // 处理多图：将所有选中的图片转为Base64
+            const imagePromises = selectedImageFiles.map(file => fileToBase64(file));
+            const imageResults = await Promise.all(imagePromises);
+            // 过滤无效数据，添加到表单
+            formData.images = imageResults.filter(Boolean); // 仅保留有效图片
+
+            // 处理附件（原有逻辑）
             const attachmentFile = document.getElementById('attachment').files[0];
+            const attachmentData = await fileToBase64(attachmentFile);
+            formData.attachment = attachmentData || null;
+
+            // 显示加载状态
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = '提交中...';
+            submitBtn.disabled = true;
             
             try {
-                // 并行处理两个文件
-                const [imageData, attachmentData] = await Promise.all([
-                    fileToBase64(imageFile),
-                    fileToBase64(attachmentFile)
-                ]);
-
-                // 添加文件数据到表单
-                formData.image = imageData || null;
-                formData.attachment = attachmentData || null;
-
-                // 显示加载状态
-                const submitBtn = form.querySelector('button[type="submit"]');
-                submitBtn.textContent = '提交中...';
-                submitBtn.disabled = true;
-                
-                // 发送到Cloudflare函数
+                // 发送到Cloudflare函数（保持原有提交方式）
                 const response = await fetch('/submit', {
                     method: 'POST',
                     headers: {
@@ -103,12 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // 显示成功提示
                     if (successMessage) {
                         successMessage.classList.remove('hidden');
-                        // 点击“确定”跳转到首页
+                        // 点击“确定”重置表单并跳转
                         const closeBtn = successMessage.querySelector('#closeSuccess');
                         if (closeBtn) {
                             closeBtn.onclick = () => {
                                 successMessage.classList.add('hidden');
-                                window.location.href = '#home'; // 跳转到首页锚点
+                                form.reset(); // 重置表单
+                                previewContainer.innerHTML = ''; // 清空预览
+                                selectedImageFiles = []; // 清空已选图片
+                                window.location.href = '#home'; // 跳转到首页
                             };
                         }
                     }
@@ -121,28 +171,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 
             } catch (error) {
                 alert(error.message);
-                const submitBtn = form.querySelector('button[type="submit"]');
+            } finally {
+                // 恢复按钮状态
                 submitBtn.textContent = '提交创作';
                 submitBtn.disabled = false;
             }
         });
     }
     
-    // 新投稿按钮逻辑（原有功能保持不变）
+    // 新投稿按钮逻辑（适配多图重置）
     if (newSubmissionBtn) {
         newSubmissionBtn.addEventListener('click', () => {
             form.reset();
             form.classList.remove('hidden');
             if (successMessage) successMessage.classList.add('hidden');
-            // 重置文件输入框
-            document.getElementById('image').value = '';
+            // 重置文件输入框和预览
+            imageInput.value = '';
             document.getElementById('attachment').value = '';
+            previewContainer.innerHTML = '';
+            selectedImageFiles = [];
             // 滚动到顶部
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 
-    // 新增：管理员登录逻辑
+    // 管理员登录逻辑（保持不变）
     if (adminForm) {
         adminForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -187,4 +240,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
