@@ -1,7 +1,7 @@
 export async function onRequestPost(context) {
     try {
         const { request } = context;
-        const data = await request.json(); // 接收网页端数据（含文件）
+        const data = await request.json(); // 接收网页端数据（含多图）
         
         // 验证基础数据
         if (!data.title || !data.content) {
@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9qZm13YWx4cnlsZHpjdWplaGF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3MjUwMzMsImV4cCI6MjA3MDMwMTAzM30.5LNX9PpYnqb5dVR5OKas7qr7zjd10IRSBZop4cuNryM";
         const BUCKET_NAME = "submission-files"; // 已有的存储桶
 
-        // 文件上传工具函数
+        // 文件上传工具函数（复用，支持单文件上传）
         const uploadFile = async (fileData) => {
             if (!fileData) return null; // 无文件则返回null
             
@@ -51,21 +51,28 @@ export async function onRequestPost(context) {
             }
         };
 
-        // 并行上传图片和附件
-        const [imageUrl, attachmentUrl] = await Promise.all([
-            uploadFile(data.image),
-            uploadFile(data.attachment)
-        ]);
+        // 关键修改：处理多张图片（遍历data.images数组）
+        const imageUrls = [];
+        if (data.images && Array.isArray(data.images)) {
+            // 遍历所有图片，并行上传
+            const uploadPromises = data.images.map(img => uploadFile(img));
+            const results = await Promise.all(uploadPromises);
+            // 收集成功上传的URL（过滤null）
+            imageUrls.push(...results.filter(url => url !== null));
+        }
 
-        // 准备存入数据库的数据（与数据库字段严格匹配）
+        // 处理附件（原有逻辑不变）
+        const attachmentUrl = await uploadFile(data.attachment);
+
+        // 准备存入数据库的数据（适配多图）
         const dbData = {
             title: data.title,
             category: data.category,
             author: data.author,
             content: data.content,
             created_at: new Date().toISOString(),
-            images: imageUrl ? [imageUrl] : [], // 图片URL存入images数组（jsonb类型）
-            file_url: attachmentUrl // 附件URL存入file_url（text类型）
+            images: imageUrls, // 存入多图URL数组（jsonb类型）
+            file_url: attachmentUrl // 附件URL（text类型）
         };
 
         // 存入Supabase数据库
@@ -92,7 +99,7 @@ export async function onRequestPost(context) {
             throw new Error('数据库存储成功，但未返回有效ID');
         }
 
-        // 返回成功响应（供前端判断）
+        // 返回成功响应
         return new Response(JSON.stringify({ 
             success: true, 
             uniqueId 
@@ -109,4 +116,3 @@ export async function onRequestPost(context) {
         });
     }
 }
-    
